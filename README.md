@@ -4,6 +4,7 @@ The Handicap Index takes many factors into account: 1) the number
 of rounds a player has scores from, 2) the Course Rating (how hard the course played is for a
 person with a +0.0 handicap), 3) the Slope Rating (how much harder the course is for people
 with higher handicaps), and 4) the weather conditions during the round.
+
 Variables
 1) num_scores
 2) more_than_3
