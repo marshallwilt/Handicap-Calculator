@@ -1,0 +1,151 @@
+clear; clc;
+% Engineering Project: Golf Stats
+% This program will calculate the handicap of a golfer based on their
+% inputted data.
+% An accurate and official Handicap Index takes into account a variety of
+% factors, including the difficulty of the course, what tees the player
+% used while playing, and the playing conditions (ex. if it was raining)
+
+% Intro statement
+disp("Welcome to Golf Stats! Let's calculate your Handicap Index.")
+
+% NUMBER OF SCORES
+% The number of scores a golfer has affects how many scores are used in
+% their Handicap calculation
+num_scores = input('How many scores do you have to enter? '); % ask for the number of scores
+while num_scores < 3        % If the user inputed that they had less than 3 scores
+    disp('You must have at least 3 scores to calculate your handicap.') % at least 3 scores are required to calculate a handicap
+    more_than_3 = lower(input('Do you have 3 or more scores? (y/n): ', "s")); % ask if they actually have more than 3
+    if more_than_3 == "y" || more_than_3 == "yes"    % checks for Y, y, YES, yes, Yes, etc. as possible inputs
+        num_scores = input('How many scores do you have to enter? '); % re-prompt user for the number of scores
+    elseif more_than_3 == "n" || more_than_3 == "no" % checks for N, n, NO, no, No, etc. as possible inputs
+        disp('You must play more rounds of golf before being able to calculate a handicap.')    % The user cannot calculate their Handicap
+        break   % The program ends for this user, since they do not have enough scores to properly calculate their handicap
+    else
+        disp('Please enter y/n as your answer.') % an input that the program cannot use was entered, so this statement will encourage correct input and ask again
+        more_than_3 = lower(input('Do you have 3 or more scores? (y/n): ', "s"));   % asks user to input again, will repeat until a valid input is received
+    end
+end
+while num_scores > 20       % If the user enters that they have more than 20 scores to enter
+    disp('Only your most recent 20 scores are used to calculate your handicap.') % Explain why they can't enter more than 20
+    num_scores = input("Since you have more than 20 scores, just enter '20': "); % Prompt them to enter 20 for the value
+end
+
+% EXPLANATION TO USER
+% Define terminology for the user
+fprintf("\nBefore we continue, let's define some golf terms.\n")
+fprintf('Scratch Golfer: player with a +0.0 Handicap Index.\nBogey Golfer: player with a +20.0 to +24.0 Handicap Index.\n')
+disp("Course Rating: the expected score for a Scratch Golfer when they play a given course. This tells us about the course's difficulty.")
+disp("Bogey Rating: the expected score for a Bogey Golfer.")
+disp('Slope Rating: the relative difficulty of a course for a Bogey Golfer compared to a Scratch Golfer.')
+
+% Define typical values for these variables
+fprintf('\nA golf course of standard difficulty has a Course Rating of 72 and a Slope Rating of 113.')
+
+% Ask the user if they would like to consider these more advanced factors
+% in their Handicap. If they do not want to, consider and set these
+% variables to their standard values
+fprintf('\nYou may choose whether you would like to consider these factors in your Handicap. Your Handicap can still be calculated without using them (they will be set to their standard values).\n')
+
+% OTHER FACTORS
+% Get Course Rating
+course_rating = GetCourseRating;    % Call to function GetCourseRating to get the user's course rating and check for valid inputs
+
+% Get Slope Rating
+slope_rating = GetSlopeRating;  % Call to function GetSlopeRating to get the user's slope rating and check for valid inputs
+
+% Introduce the idea of adjusting for weather
+disp("Awesome! Now, were there poor weather conditions that significantly affected how you played?")
+disp('If there were, that can be factored into your Handicap.')
+
+% GetWeather
+conditions = GetWeather;
+
+% COLLECT SCORES
+% Now that the user has confirmed they will enter between 3 and 20 scores,
+% the program will continue and collect their information
+scores = zeros(1, num_scores);  % Initalize an array to collect scores in
+disp('Please remember to only enter scores of 18-hole rounds.')
+for i = 1:num_scores
+    fprintf('Round %.0f score', i);     % Loop to ask for score inputs
+    scores(i) = input(': ');
+end
+
+% ADJUSTMENT
+% Certain numbers of scores require an adjustment to be made in the
+% calculation. This adjustment is determined by official handicap indexing
+% rules and applies to lower quanities of scores (3, 4, and 6)
+if length(scores) == 3  
+    adjustment = -2;    % adjustment for 3 scores is -2
+elseif length(scores) == 4 || length(scores) == 6   % adjustment for 5 scores is not necessary by handicap rules
+    adjustment = -1;    % adjustment for 4 or 6 scores is -1
+else
+    adjustment = 0; % there is no adjustment required for all other quantities of scores
+end
+
+% AVERAGE CALCULATION
+sorted_scores = sort(scores, 'ascend'); % Sort the scores in ascending order to easily access the lowest ones first
+total_score = 0;    % Initalize the total score variable to be 0
+% A player's Handicap Index is calculated by taking the average of some of the
+% player's lowest scores, depending on how many they entered
+
+if length(scores) == 3 || length(scores) == 4 || length(scores) == 5    % 3-5 scores
+    n = 1;
+elseif length(scores) == 6 || length(scores) == 7 || length(scores) == 8    % 6-8 scores
+    n = 2;
+elseif length(scores) == 9 || length(scores) == 10 || length(scores) == 11  % 9-11 scores
+    n = 3;
+elseif length(scores) == 12 || length(scores) == 13 || length(scores) == 14   % 12-14 scores
+    n = 4;
+elseif length(scores) == 15 || length(scores) == 16     % 15-16 scores
+    n = 5;
+elseif length(scores) == 17 || length(scores) == 18     % 17-18 scores
+    n = 6;
+elseif length(scores) == 19     % 19 scores
+    n = 7;
+elseif length(scores) == 20     % 20 scores
+    n = 8;
+end
+
+for i = 1:n     % averages the lowest 'n' scores the user entered
+    total_score = total_score + sorted_scores(i);   % sum 'n' lowest scores
+end
+avg_score = total_score / n;    % calculate average
+
+
+% Now, the average score variable is equal to the average of the user's
+% lowest scores (however many) scores, depending on how many they entered
+
+% HANDICAP CALCULATION
+% The Handicap formula is:
+% (113 / Slope Rating) * (Average Score - Course Rating - Playing Conditions Adjustment + Other Adjustment)
+handicap = (113/slope_rating)*(avg_score - course_rating - conditions - adjustment);
+
+
+% OUTPUT FORMATTING
+if handicap > 0
+    fprintf('Your Handicap Index is +%.1f!\n', handicap); % Positive handicaps are typically displaying with a plus sign in front of them
+elseif handicap == 0
+    fprintf('You are a Scratch Golfer! Your Handicap Index is %.1f!\n', handicap); % A scratch golfer is a golfer with a handicap of 0
+else
+    fprintf('Your Handicap Index is %.1f!\n', handicap);
+end
+
+xvalues = 1:num_scores;
+yvalues = scores;
+b = bar(xvalues, yvalues, BarWidth = 0.5);
+xlabel('Round');
+ylabel('Score');
+title('Scoring History');
+highest_considered = sorted_scores(n);   % Returns the highest score that was considered in the Handicap calculation
+contribute_handicap = scores <= highest_considered; % Returns a boolean of 0 or 1, depending on if that score contributed to the handicap
+b.FaceColor = 'flat';
+for i = 1:num_scores
+    if contribute_handicap(i) == 0
+        b.CData(i,:) = [1 0 0];
+    else
+        b.CData(i,:) = [0 1 0];
+    end
+end
+line = yline(highest_considered, '--k', LineWidth = 2);
+legend('Not Considered in Handicap', 'Highest Considered Score for Handicap')
